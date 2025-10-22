@@ -2,6 +2,7 @@ import gymnasium as gym
 import torch
 # from torch.utils.tensorboard import SummaryWriter
 import datetime
+from memory import ReplayBuffer
 
 class Agent:
 
@@ -11,6 +12,18 @@ class Agent:
         self.batch_size = 512
         
         self.env = env
+
+        obs, info = env.reset()
+
+        action = env.action_space.sample() 
+
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+
+        self.memory = ReplayBuffer(max_size=self.max_memory_size,
+                                   input_shape=obs.shape,
+                                   n_actions=action.shape[0],
+                                   input_device=self.device,
+                                   output_device=self.device) 
 
 
 
@@ -42,13 +55,15 @@ class Agent:
 
                 next_obs, reward, done, truncated, info = self.env.step(action)
 
-                # TODO: Store memory transitions. 
+                self.memory.store_transition(obs, action, reward, next_obs, done)
 
                 obs = next_obs
                 episode_reward = episode_reward + reward
 
                 if(done or truncated):
                     break
+
+            self.memory.print_mem_size()
 
 
 
