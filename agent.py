@@ -1,8 +1,10 @@
+from functools import total_ordering
 import gymnasium as gym
 import torch
-# from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 import datetime
 from memory import ReplayBuffer
+from model import *
 
 class Agent:
 
@@ -25,6 +27,9 @@ class Agent:
                                    input_device=self.device,
                                    output_device=self.device) 
 
+        self.model = EnsembleModel(obs_shape=obs.shape[0], action_shape=action.shape[0],
+                                   device=self.device)
+
 
 
     def plan_action(self):
@@ -37,6 +42,9 @@ class Agent:
 
         total_steps = 0
         best_score = -1000
+
+        summary_writer_name = f'runs/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
+        writer = SummaryWriter(summary_writer_name)
 
         for episode in range(episodes):
 
@@ -63,7 +71,27 @@ class Agent:
                 if(done or truncated):
                     break
 
-            self.memory.print_mem_size()
+            print(f"Completed episode {episode} with score {episode_reward}")
+
+            if(episode % 10 == 0):
+                for _ in range(100):
+                    if(self.memory.can_sample(batch_size=self.batch_size)):
+                        states, actions, rewards, next_states, dones = self.memory.sample_buffer(batch_size=self.batch_size)
+
+                        rewards = rewards.unsqueeze(1)
+                        dones = dones.unsqueeze(1).float()
+
+                        loss = self.model.train_step(states=states,
+                                                     next_states=next_states,
+                                                     actions=actions,
+                                                     rewards=rewards)
+
+                        writer.add_scalar("Loss/model", loss, total_steps)
+
+                        total_steps += 1
+
+                        
+
 
 
 
