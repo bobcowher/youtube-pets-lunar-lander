@@ -4,7 +4,7 @@ import time
 
 start_time = time.perf_counter()
 
-episodes = 200
+episodes = 1200
 
 env = gym.make("LunarLander-v3", continuous=True, gravity=-10.0,
                enable_wind=False, wind_power=15.0, turbulence_power=1.5,

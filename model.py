@@ -28,7 +28,7 @@ class DynamicsModel(nn.Module):
 
 class EnsembleModel:
 
-    def __init__(self, num_models=5, hidden_dim=256, obs_shape=None, action_shape=None,
+    def __init__(self, num_models=5, hidden_dim=512, obs_shape=None, action_shape=None,
                  device=None, learning_rate=0.0001):
         
         self.models = [DynamicsModel(hidden_dim=hidden_dim, obs_shape=obs_shape,
@@ -74,7 +74,7 @@ class EnsembleModel:
                 obs_diffs.append(obs_diff)
                 rewards.append(reward)
 
-            obs_diffs = obs_diffs.stack(obs_diffs)
+            obs_diffs = torch.stack(obs_diffs)
             rewards = torch.stack(rewards)
 
             obs_uncertainty = obs_diffs.var(0)
